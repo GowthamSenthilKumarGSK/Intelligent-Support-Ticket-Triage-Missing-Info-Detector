@@ -15,8 +15,8 @@ A local Python app that reads a support ticket and decides:
 
 ## Architecture 
 
-- **Frozen Embeddings + Small Classifiers:** We use `bge-base-en-v1.5` to convert each ticket into a vector. Then, two Logistic Regression models predict the team and priority. We have around 900 labelled tickets, so this approach is faster and more suitable than fine-tuning a large model.
-- **Confidence Check:** We use Conformal Prediction to check how many teams could be suitable for a ticket. We also use a Nearest-Neighbour check to see how similar the ticket is to previous tickets. If the system is not sure, it can say "not sure" instead of giving a wrong answer confidently.
+- **Frozen Embeddings + Small Classifiers:** I use `bge-base-en-v1.5` to convert each ticket into a vector. Then, two Logistic Regression models predict the team and priority. We have around 900 labelled tickets, so this approach is faster and more suitable than fine-tuning a large model.
+- **Confidence Check:** I use Conformal Prediction to check how many teams could be suitable for a ticket. We also use a Nearest-Neighbour check to see how similar the ticket is to previous tickets. If the system is not sure, it can say "not sure" instead of giving a wrong answer confidently.
 - **Priority and Level are Separate:** Priority tells us how urgent the ticket is, while L1/L2/L3 tells us how technically difficult it is. Priority is predicted by the model, but clear cases like outage, data loss, or breach can directly make the ticket P1. The level is decided using rule-based checks.
 - **Information Gap + Misrouting Guard:** For L3 tickets, the system checks whether important details like error evidence, environment, and reproduction steps are available. If something is missing or the team is uncertain, it gives Needs Clarification and shows what information is required.
 - **Explainable Decisions:** The app shows which rule was triggered, what information is missing, and which previous tickets are most similar. The rules are kept in `rules.py` and `guard.py`, so a reviewer can understand why the system made that decision.
