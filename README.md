@@ -11,17 +11,17 @@ A local Python app that reads a support ticket and decides:
 
 ---
 
-## Architecture (5 bullets)
+## Architecture
 
-- **Frozen embedder plus small classifiers.** `bge-base-en-v1.5` turns each ticket into a vector and two logistic-regression heads predict **team** and **priority**. *Why:* with about 900 labelled tickets this is more reliable than fine-tuning a large model, and it trains in seconds on a laptop.
+- **Frozen embedder plus small classifiers:** `bge-base-en-v1.5` turns each ticket into a vector and two logistic-regression heads predict **team** and **priority**. *Why:* with about 900 labelled tickets this is more reliable than fine-tuning a large model, and it trains in seconds on a laptop.
 
-- **Calibrated confidence.** A **conformal prediction set** says how many teams are plausible, and a **nearest-neighbour check** says whether the ticket resembles any past one. *Why:* a wrong confident answer is worse than "not sure", and the thresholds come from data, not guesses.
+- **Calibrated confidence:** A **conformal prediction set** says how many teams are plausible, and a **nearest-neighbour check** says whether the ticket resembles any past one. *Why:* a wrong confident answer is worse than "not sure", and the thresholds come from data, not guesses.
 
-- **Priority and level are decided separately.** Priority is the model plus a **safety floor** of explicit phrases (outage, data loss, breach) that force P1; level (L1/L2/L3) comes from **readable rules**. *Why:* urgency and technical depth are different questions, and a production outage can be P1 yet an L2 job.
+- **Priority and level are decided separately:** Priority is the model plus a **safety floor** of explicit phrases (outage, data loss, breach) that force P1; level (L1/L2/L3) comes from **readable rules**. *Why:* urgency and technical depth are different questions, and a production outage can be P1 yet an L2 job.
 
-- **Information Gap and Misrouting Guard.** For L3 tickets it checks the team-specific details a developer needs (**error evidence, environment, repro steps**). If any are missing or the team is uncertain, it returns `Needs Clarification` with a checklist; a floor-rule P1 is routed immediately while details are requested. *Why:* it stops developers receiving tickets they cannot act on, without delaying urgent ones.
+- **Information Gap and Misrouting Guard:** For L3 tickets it checks the team-specific details a developer needs (**error evidence, environment, repro steps**). If any are missing or the team is uncertain, it returns `Needs Clarification` with a checklist; a floor-rule P1 is routed immediately while details are requested. *Why:* it stops developers receiving tickets they cannot act on, without delaying urgent ones.
 
-- **Every decision is explained.** The app shows which rule fired, what is missing, and the most similar past tickets. *Why:* the rules sit in short lists in `rules.py` and `guard.py`, so a reviewer can see exactly what drives each result.
+- **Every decision is explained:** The app shows which rule fired, what is missing, and the most similar past tickets. *Why:* the rules sit in short lists in `rules.py` and `guard.py`, so a reviewer can see exactly what drives each result.
 
 ---
 
@@ -45,9 +45,9 @@ A local Python app that reads a support ticket and decides:
 
 ![Production outage](screenshots/05_outage.png)
 
-**P1 incident with missing details** (routed immediately, details requested in parallel)
+**Write my own** 
 
-![P1 with missing details](screenshots/09_p1_missing.png)
+![P1 with missing details](screenshots/09_write_my_own.png)
 
 **Command-line run**
 
@@ -118,12 +118,12 @@ On 240 tickets the model had not trained on, the conformal check found **209 con
 
 ## Limitations
 
-- **Priority is the weakest part.** The priority labels come mostly from "bug versus feature request", so P2 versus P3 is hard to separate (accuracy 0.67). P1 predictions are only 39% precise, which is why only explicit floor rules trigger immediate escalation, and why how-to questions are capped at P3.
-- **Level rules are keyword-based** and can over-assign L3 when a ticket contains a word like "crash". A ticket that matches no rule gets the default L2 and is flagged "level unclear, please review".
-- **Short tickets** look unlike the long training tickets, so they are often flagged for review. The out-of-domain rule fires only when a ticket also contains no technical cue and has a top team probability under 0.5. That 0.5 cut-off was chosen by hand, not learned from data.
-- **"Confident"** means the conformal set holds exactly one team. The probability shown is the model's top score, and it can be modest even when the answer is confident.
-- **Environment detection** misses some tickets that describe their setup in plain prose.
-- **Calibration** uses cross-validated training predictions, and the labels are weak, so the reported numbers measure agreement with those labels, not with human judgement.
+- **Priority is the weakest part:** The priority labels come mostly from "bug versus feature request", so P2 versus P3 is hard to separate (accuracy 0.67). P1 predictions are only 39% precise, which is why only explicit floor rules trigger immediate escalation, and why how-to questions are capped at P3.
+- **Level rules are keyword-based:** and can over-assign L3 when a ticket contains a word like "crash". A ticket that matches no rule gets the default L2 and is flagged "level unclear, please review".
+- **Short tickets:** look unlike the long training tickets, so they are often flagged for review. The out-of-domain rule fires only when a ticket also contains no technical cue and has a top team probability under 0.5. That 0.5 cut-off was chosen by hand, not learned from data.
+- **"Confident:"** means the conformal set holds exactly one team. The probability shown is the model's top score, and it can be modest even when the answer is confident.
+- **Environment detection:** misses some tickets that describe their setup in plain prose.
+- **Calibration:** uses cross-validated training predictions, and the labels are weak, so the reported numbers measure agreement with those labels, not with human judgement.
 
 ---
 
