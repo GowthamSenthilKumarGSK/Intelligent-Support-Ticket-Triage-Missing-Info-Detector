@@ -1,4 +1,6 @@
-# [Intelligent-Support-Ticket-Triage-Missing-Info-Detector](https://github.com/GowthamSenthilKumarGSK/Intelligent-Support-Ticket-Triage-Missing-Info-Detector)
+# Intelligent Support Ticket Triage & Missing-Info Detector
+
+Repository: [Intelligent-Support-Ticket-Triage-Missing-Info-Detector](https://github.com/GowthamSenthilKumarGSK/Intelligent-Support-Ticket-Triage-Missing-Info-Detector)
 
 **Track:** AI / NLP and Smart Routing
 
@@ -11,7 +13,7 @@ A local Python app that reads a support ticket and decides:
 
 ---
 
-## Architecture (5 bullets)
+## Architecture 
 
 - **Frozen Embeddings + Small Classifiers:** We use `bge-base-en-v1.5` to convert each ticket into a vector. Then, two Logistic Regression models predict the team and priority. We have around 900 labelled tickets, so this approach is faster and more suitable than fine-tuning a large model.
 - **Confidence Check:** We use Conformal Prediction to check how many teams could be suitable for a ticket. We also use a Nearest-Neighbour check to see how similar the ticket is to previous tickets. If the system is not sure, it can say "not sure" instead of giving a wrong answer confidently.
