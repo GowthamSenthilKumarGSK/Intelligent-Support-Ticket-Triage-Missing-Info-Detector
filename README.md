@@ -11,17 +11,22 @@ A local Python app that reads a support ticket and decides:
 
 ---
 
-## Architecture
+## Architecture (5 bullets)
 
-- **Frozen embedder plus small classifiers:** `bge-base-en-v1.5` turns each ticket into a vector and two logistic-regression heads predict **team** and **priority**. *Why:* with about 900 labelled tickets this is more reliable than fine-tuning a large model, and it trains in seconds on a laptop.
+- **Frozen Embeddings + Small Classifiers:** We use `bge-base-en-v1.5` to convert each ticket into a vector. Then, two Logistic Regression models predict the team and priority. We have around 900 labelled tickets, so this approach is faster and more suitable than fine-tuning a large model.
+- **Confidence Check:** We use Conformal Prediction to check how many teams could be suitable for a ticket. We also use a Nearest-Neighbour check to see how similar the ticket is to previous tickets. If the system is not sure, it can say "not sure" instead of giving a wrong answer confidently.
+- **Priority and Level are Separate:** Priority tells us how urgent the ticket is, while L1/L2/L3 tells us how technically difficult it is. Priority is predicted by the model, but clear cases like outage, data loss, or breach can directly make the ticket P1. The level is decided using rule-based checks.
+- **Information Gap + Misrouting Guard:** For L3 tickets, the system checks whether important details like error evidence, environment, and reproduction steps are available. If something is missing or the team is uncertain, it gives Needs Clarification and shows what information is required.
+- **Explainable Decisions:** The app shows which rule was triggered, what information is missing, and which previous tickets are most similar. The rules are kept in `rules.py` and `guard.py`, so a reviewer can understand why the system made that decision.
 
-- **Calibrated confidence:** A **conformal prediction set** says how many teams are plausible, and a **nearest-neighbour check** says whether the ticket resembles any past one. *Why:* a wrong confident answer is worse than "not sure", and the thresholds come from data, not guesses.
+---
 
-- **Priority and level are decided separately:** Priority is the model plus a **safety floor** of explicit phrases (outage, data loss, breach) that force P1; level (L1/L2/L3) comes from **readable rules**. *Why:* urgency and technical depth are different questions, and a production outage can be P1 yet an L2 job.
+## Models used
 
-- **Information Gap and Misrouting Guard:** For L3 tickets it checks the team-specific details a developer needs (**error evidence, environment, repro steps**). If any are missing or the team is uncertain, it returns `Needs Clarification` with a checklist; a floor-rule P1 is routed immediately while details are requested. *Why:* it stops developers receiving tickets they cannot act on, without delaying urgent ones.
-
-- **Every decision is explained:** The app shows which rule fired, what is missing, and the most similar past tickets. *Why:* the rules sit in short lists in `rules.py` and `guard.py`, so a reviewer can see exactly what drives each result.
+- **Embedding model:** `BAAI/bge-base-en-v1.5` (768-dimensional vectors, ticket text cut at 256 tokens)
+- **Classifiers:** scikit-learn `LogisticRegression` with balanced class weights, one for team and one for priority
+- **Confidence:** conformal prediction at 90% coverage (alpha 0.1), plus cosine similarity to the 5 nearest training tickets
+- **Everything else** (level, guard, priority floor): hand-written rules, no model
 
 ---
 
@@ -70,6 +75,19 @@ A local Python app that reads a support ticket and decides:
 **Out-of-domain ticket** (a pizza order)
 
 ![Out of domain](screenshots/08_out_of_domain.png)
+
+---
+
+## Future work
+
+I ran out of time for a few things that were in my original plan.
+
+- **Zero-shot level labelling:** Right now L1/L2/L3 comes from keyword rules. I wanted to use a zero-shot NLI model (BART-MNLI or the DeBERTa-v3 zero-shot model) to label levels from short descriptions of each level, and then train a small level classifier on those labels. I would check it against a hand-labelled set of tickets.
+- **Fine-tuning the embedder:** I would fine-tune the embedding model on the team labels with a contrastive method such as SetFit, and try a larger model such as Qwen3-Embedding if a GPU is available. It was too slow on a CPU for this deadline.
+- **Reading prose in the guard:** The guard finds the environment and repro steps with patterns, so it misses setups described in plain sentences. An NLI model could read those and decide whether the ticket really describes steps to reproduce.
+- **A human-audited test set:** The team and priority labels are weak labels. I held out 200 tickets for a blind audit, which would give real test numbers and a better calibration set for the confidence thresholds.
+- **Better priority labels:** Priority in this data is mostly bug versus feature request. With real urgency labels, or a rubric based on impact and number of users affected, the priority model could be much better than 0.67 accuracy.
+- **Learned thresholds:** The 0.5 probability cut-off for the out-of-domain check was chosen by hand. It should be learned from data.
 
 ---
 
