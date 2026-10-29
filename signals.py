@@ -135,13 +135,17 @@ def mentions(text, pattern):
     """Check for a pattern, ignoring a nearby explicit negation."""
     for match in re.finditer(pattern, text, flags=re.I):
         before = text[max(0, match.start() - 40):match.start()]
+        after = text[match.end():match.end() + 25]
 
-        if not re.search(
+        denied_before = re.search(
             r"\b(?:no|not|never|without|neither|nor|isn't|"
             r"doesn't|don't|didn't)\b[\w\s,]{0,25}$",
             before,
             flags=re.I,
-        ):
+        )
+        denied_after = re.match(r"\W*(?:did not|didn't|never)\b", after, flags=re.I)
+
+        if not denied_before and not denied_after:
             return True
 
     return False
