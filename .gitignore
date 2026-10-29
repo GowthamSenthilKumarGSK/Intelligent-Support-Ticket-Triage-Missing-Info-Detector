@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Generated model artifacts
+data/embeddings.npy
+models/*.joblib
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
