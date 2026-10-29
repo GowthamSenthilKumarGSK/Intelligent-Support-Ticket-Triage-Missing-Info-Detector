@@ -1,7 +1,0 @@
-## Architecture 
-
-- **Frozen embedder plus small classifiers.** `bge-base-en-v1.5` turns each ticket into a vector and two logistic-regression heads predict team and priority. *Why:* with about 900 labelled tickets this is more reliable than fine-tuning a large model, and it trains in seconds on a laptop.
-- **Calibrated confidence.** A conformal prediction set says how many teams are plausible, and a nearest-neighbour check says whether the ticket resembles any past one. *Why:* a wrong confident answer is worse than "not sure", and the thresholds come from data, not guesses.
-- **Priority and level are decided separately.** Priority is the model plus a safety floor of explicit phrases (outage, data loss, breach) that force P1; level (L1/L2/L3) comes from readable rules. *Why:* urgency and technical depth are different questions, and a production outage can be P1 yet an L2 job.
-- **Information Gap and Misrouting Guard.** For L3 tickets it checks the team-specific details a developer needs (error evidence, environment, repro steps). If any are missing or the team is uncertain, it returns `Needs Clarification` with a checklist; a floor-rule P1 is routed immediately while details are requested. *Why:* it stops developers receiving tickets they cannot act on, without delaying urgent ones.
-- **Every decision is explained.** The app shows which rule fired, what is missing, and the most similar past tickets. *Why:* the rules sit in short lists in `rules.py` and `guard.py`, so a reviewer can see exactly what drives each result.
